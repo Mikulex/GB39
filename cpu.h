@@ -184,6 +184,8 @@ void ex_cb_instr(registers *r, uint8_t op, uint8_t **ram);
 
 void set_f(uint8_t *flag, uint8_t mask);
 void clear_f(uint8_t *flag, uint8_t mask);
-void chk_carry(uint8_t prev, uint8_t calc, uint8_t *f);
+void chk_carry_r(uint8_t prev, uint8_t calc, uint8_t *f);
+void chk_carry_rr(uint16_t prev, uint16_t calc, uint8_t *f);
+void chk_zero(uint16_t val, uint8_t *f);
 
 #endif

@@ -3,9 +3,13 @@
 #include <stdint.h>
 
 #define FLAG_MASK_Z 1u
-#define FLAG_MASK_N 1u << 1
-#define FLAG_MASK_H 1u << 2
-#define FLAG_MASK_C 1u << 3
+#define FLAG_MASK_N (1u << 1)
+#define FLAG_MASK_H (1u << 2)
+#define FLAG_MASK_C (1u << 3)
+#define BIT_MASK_3 (1u << 3)
+#define BIT_MASK_7 (1u << 7)
+#define BIT_MASK_11 (1u << 11)
+#define BIT_MASK_15 (1u << 15)
 
 void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
   registers regs;
@@ -956,7 +960,7 @@ void ld_hl_sp_dd(registers *regs, uint8_t dd, uint8_t **ram) {
   uint16_t addr = (regs->SP) + signed_dd;
 
   if (signed_dd >= 0) {
-    chk_carry(prev, addr, &regs->F);
+    chk_carry_r(prev, addr, &regs->F);
   } else {
     if ((prev & 0x80) == 0 && (addr & 0x80) == 1) {
       set_f(&regs->F, FLAG_MASK_C);
@@ -989,22 +993,97 @@ void pop_rr(uint16_t *reg, uint16_t *sp, uint8_t **ram) {
 
 // arithmetic instructions
 void inc_rr(uint16_t *reg) { (*reg)++; }
+
 void inc_r(uint8_t *reg, uint8_t *f) {
   uint8_t prev = (*reg);
   (*reg)++;
-  chk_carry(prev, (*reg), f);
+  chk_carry_r(prev, (*reg), f);
 }
-void chk_carry(uint8_t prev, uint8_t calc, uint8_t *f) {
-  if ((prev & 0x80) == 1 && (calc & 0x80) == 0) {
+
+void inc_indr(uint16_t addr, uint8_t *f, uint8_t **ram) { (*ram)[addr]++; }
+
+void dec_rr(uint16_t *reg) { (*reg)--; }
+
+void dec_r(uint8_t *reg, uint8_t *f) {
+  uint8_t prev = (*reg);
+  (*reg)--;
+  chk_carry_r(prev, (*reg), f);
+}
+
+void dec_indr(uint16_t addr, uint8_t *f, uint8_t **ram) { (*ram)[addr]--; }
+
+void add_rr_rr(uint16_t *reg1, uint16_t *reg2, uint8_t *f) {
+  uint16_t prev = (*reg1);
+  (*reg1) += (*reg2);
+  clear_f(f, FLAG_MASK_N);
+  chk_carry_rr(prev, (*reg1), f);
+}
+
+void add_rr_n(uint16_t *reg, uint8_t n, uint8_t *f) {
+  uint16_t prev = (*reg);
+  (*reg) += n;
+  clear_f(f, FLAG_MASK_N);
+  clear_f(f, FLAG_MASK_Z);
+  chk_carry_rr(prev, (*reg), f);
+}
+
+void add_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
+  uint8_t prev = (*reg1);
+  (*reg1) += (*reg2);
+  chk_zero((*reg1), f);
+  clear_f(f, FLAG_MASK_N);
+  chk_carry_r(prev, (*reg1), f);
+}
+
+void add_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+  uint8_t prev = (*reg);
+  (*reg) += (*ram)[addr];
+  chk_zero((*reg), f);
+  clear_f(f, FLAG_MASK_N);
+  chk_carry_r(prev, (*reg), f);
+}
+
+void add_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
+  uint8_t prev = (*reg);
+  (*reg) += n;
+  chk_zero((*reg), f);
+  clear_f(f, FLAG_MASK_N);
+  chk_carry_r(prev, (*reg), f);
+}
+
+void chk_carry_rr(uint16_t prev, uint16_t calc, uint8_t *f) {
+  if ((prev & BIT_MASK_15) == 1 && (calc & BIT_MASK_15) == 0) {
     set_f(f, FLAG_MASK_C);
   } else {
     clear_f(f, FLAG_MASK_C);
   }
 
-  if ((prev & 0x08) == 1 && (calc & 0x8) == 0) {
+  if ((prev & BIT_MASK_11) == 1 && (calc & BIT_MASK_11) == 0) {
     set_f(f, FLAG_MASK_H);
   } else {
     clear_f(f, FLAG_MASK_H);
+  }
+}
+
+void chk_carry_r(uint8_t prev, uint8_t calc, uint8_t *f) {
+  if ((prev & BIT_MASK_7) == 1 && (calc & BIT_MASK_7) == 0) {
+    set_f(f, FLAG_MASK_C);
+  } else {
+    clear_f(f, FLAG_MASK_C);
+  }
+
+  if ((prev & BIT_MASK_3) == 1 && (calc & BIT_MASK_3) == 0) {
+    set_f(f, FLAG_MASK_H);
+  } else {
+    clear_f(f, FLAG_MASK_H);
+  }
+}
+
+void chk_zero(uint16_t val, uint8_t *f) {
+  if (val == 0) {
+    set_f(f, FLAG_MASK_Z);
+  } else {
+    clear_f(f, FLAG_MASK_Z);
   }
 }
 
