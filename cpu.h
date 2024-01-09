@@ -108,24 +108,27 @@ void ccf(uint8_t *f);
 
 // bit manipulation instructions
 void rlc(uint8_t *reg, uint8_t *f);
-void rlc_indr(uint16_t *reg, uint8_t *f, uint8_t **ram);
+void rlca(uint8_t *reg, uint8_t *f);
+void rlc_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 void rl(uint8_t *reg, uint8_t *f);
-void rl_indr(uint16_t *reg, uint8_t *f, uint8_t **ram);
+void rla(uint8_t *reg, uint8_t *f);
+void rl_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 
 void rrc(uint8_t *reg, uint8_t *f);
-void rrc_indr(uint16_t *reg, uint8_t *f, uint8_t **ram);
-void rr(uint8_t *reg, uint8_t *f);
-void rr_indr(uint16_t *reg, uint8_t *f, uint8_t **ram);
+void rrca(uint8_t *reg, uint8_t *f);
+void rrc_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
+void rra(uint8_t *reg, uint8_t *f);
+void rr_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 
 void sla(uint8_t *reg, uint8_t *f);
-void sla_indr(uint16_t *reg, uint8_t *f, uint8_t **ram);
+void sla_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 void sra(uint8_t *reg, uint8_t *f);
-void sra_indr(uint16_t *reg, uint8_t *f, uint8_t **ram);
+void sra_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 
 void swap(uint8_t *reg, uint8_t *f);
-void swap_indr(uint16_t *reg, uint8_t *f, uint8_t **ram);
+void swap_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 void srl(uint8_t *reg, uint8_t *f);
-void srl_indr(uint16_t *reg, uint8_t *f, uint8_t **ram);
+void srl_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 
 // single bit manipulations
 void bit(uint8_t n, uint8_t *reg, uint8_t *flags);
