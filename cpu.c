@@ -992,6 +992,7 @@ void pop_rr(uint16_t *reg, uint16_t *sp, uint8_t **ram) {
 }
 
 // arithmetic instructions
+// inc
 void inc_rr(uint16_t *reg) { (*reg)++; }
 
 void inc_r(uint8_t *reg, uint8_t *f) {
@@ -1002,6 +1003,7 @@ void inc_r(uint8_t *reg, uint8_t *f) {
 
 void inc_indr(uint16_t addr, uint8_t *f, uint8_t **ram) { (*ram)[addr]++; }
 
+// dec
 void dec_rr(uint16_t *reg) { (*reg)--; }
 
 void dec_r(uint8_t *reg, uint8_t *f) {
@@ -1012,6 +1014,7 @@ void dec_r(uint8_t *reg, uint8_t *f) {
 
 void dec_indr(uint16_t addr, uint8_t *f, uint8_t **ram) { (*ram)[addr]--; }
 
+// add
 void add_rr_rr(uint16_t *reg1, uint16_t *reg2, uint8_t *f) {
   uint16_t prev = (*reg1);
   (*reg1) += (*reg2);
@@ -1049,6 +1052,155 @@ void add_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
   chk_zero((*reg), f);
   clear_f(f, FLAG_MASK_N);
   chk_carry_r(prev, (*reg), f);
+}
+
+// adc
+void adc_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
+  uint8_t prev = (*reg);
+  (*reg) += n + (((*f) & FLAG_MASK_C) >> 3);
+  chk_zero((*reg), f);
+  clear_f(f, FLAG_MASK_N);
+  chk_carry_r(prev, (*reg), f);
+}
+
+void adc_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
+  adc_r_n(reg1, (*reg2), f);
+}
+
+void adc_r_n_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+  adc_r_n(reg, (*ram)[addr], f);
+}
+
+// sub
+void sub_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
+  uint8_t prev = (*reg);
+  (*reg) -= n;
+  chk_zero((*reg), f);
+  set_f(f, FLAG_MASK_N);
+  chk_carry_r(prev, (*reg), f);
+}
+
+void sub_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
+  sub_r_n(reg1, (*reg2), f);
+}
+
+void sub_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+  sub_r_n(reg, (*ram)[addr], f);
+}
+
+// sbc
+void sbc_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
+  sbc_r_n(reg1, (*reg2), f);
+}
+
+void sbc_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+  sbc_r_n(reg, (*ram)[addr], f);
+}
+
+void sbc_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
+  uint8_t prev = (*reg);
+  (*reg) -= n - (((*f) & FLAG_MASK_C) >> 3);
+  chk_zero((*reg), f);
+  set_f(f, FLAG_MASK_N);
+  chk_carry_r(prev, (*reg), f);
+}
+
+// and
+void and_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
+  and_r_n(reg1, (*reg2), f);
+}
+void and_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+  and_r_n(reg, (*ram)[addr], f);
+}
+void and_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
+  (*reg) &= n;
+  chk_zero((*reg), f);
+  clear_f(f, FLAG_MASK_N);
+  set_f(f, FLAG_MASK_H);
+  clear_f(f, FLAG_MASK_C);
+}
+
+void xor_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
+  xor_r_n(reg1, (*reg2), f);
+}
+void xor_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+  xor_r_n(reg, (*ram)[addr], f);
+}
+void xor_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
+  (*reg) ^= n;
+  chk_zero((*reg), f);
+  clear_f(f, FLAG_MASK_N);
+  clear_f(f, FLAG_MASK_H);
+  clear_f(f, FLAG_MASK_C);
+}
+
+void or_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
+  or_r_n(reg1, (*reg2), f);
+}
+void or_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+  or_r_n(reg, (*ram)[addr], f);
+}
+void or_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
+  (*reg) |= n;
+  chk_zero((*reg), f);
+  clear_f(f, FLAG_MASK_N);
+  clear_f(f, FLAG_MASK_H);
+  clear_f(f, FLAG_MASK_C);
+}
+
+// cp
+void cp_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
+  (or_r_n(reg1, (*reg2), f));
+}
+
+void cp_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+  (or_r_n(reg, (*ram)[addr], f));
+}
+
+void cp_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
+  uint8_t res = (*reg) - n;
+  chk_zero(res, f);
+  set_f(f, FLAG_MASK_N);
+  chk_carry_r(res, (*reg), f);
+}
+
+void daa(uint8_t *a, uint8_t *flags) {
+  if (((*flags) | FLAG_MASK_N) > 0) {
+    if (((*flags) | FLAG_MASK_C) > 0 || (*a) > 0x90) {
+      (*a) += 0x60;
+      set_f(flags, FLAG_MASK_C);
+    }
+    if (((*flags) | FLAG_MASK_H) > 0 || ((*a) & 0x0F) > 0x06) {
+      (*a) += 0x06;
+    }
+  } else {
+    if (((*flags) | FLAG_MASK_C) > 0) {
+      (*a) -= 0x60;
+    }
+    if (((*flags) | FLAG_MASK_H) > 0) {
+      (*a) -= 0x06;
+    }
+  }
+  chk_zero((*a), flags);
+  clear_f(flags, FLAG_MASK_H);
+}
+
+// bit manipulation
+
+void cpl(uint8_t *a, uint8_t *f) {
+  (*a) = ~(*a);
+  set_f(f, FLAG_MASK_N);
+  set_f(f, FLAG_MASK_H);
+}
+void scf(uint8_t *f) {
+  (*f) = (*f) & ~((*f) & FLAG_MASK_C);
+  set_f(f, FLAG_MASK_N);
+  set_f(f, FLAG_MASK_H);
+}
+void ccf(uint8_t *f) {
+  clear_f(f, FLAG_MASK_C);
+  clear_f(f, FLAG_MASK_N);
+  clear_f(f, FLAG_MASK_H);
 }
 
 void chk_carry_rr(uint16_t prev, uint16_t calc, uint8_t *f) {

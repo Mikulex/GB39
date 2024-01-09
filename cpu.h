@@ -87,7 +87,7 @@ void sbc_r_n(uint8_t *reg, uint8_t n, uint8_t *f);
 
 void and_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f);
 void and_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram);
-void and_r_n(uint8_t *reg, uint8_t n, uint8_t *f, uint8_t **ram);
+void and_r_n(uint8_t *reg, uint8_t n, uint8_t *f);
 
 void xor_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f);
 void xor_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram);
@@ -95,8 +95,7 @@ void xor_r_n(uint8_t *reg, uint8_t n, uint8_t *f);
 
 void or_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f);
 void or_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram);
-void or_n_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram);
-void or_r_n(uint8_t *reg, uint8_t n, uint8_t *f, uint8_t **ram);
+void or_r_n(uint8_t *reg, uint8_t n, uint8_t *f);
 
 void cp_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f);
 void cp_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram);
