@@ -1,7 +1,6 @@
 #include "cpu.h"
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #define FLAG_MASK_Z 1u
 #define FLAG_MASK_N (1u << 1)
@@ -12,6 +11,28 @@
 #define BIT_MASK_11 (1u << 11)
 #define BIT_MASK_15 (1u << 15)
 
+// clang-format off
+uint8_t CYCLE_LENGHTS[] = {
+//  0   1   2   3   4   5   6   7   8   9   a   b  c   d   e  f
+    4,  12, 8,  8,  4,  4,  8,  4,  20, 8,  8,  8, 4,  4,  8, 4,  // 0
+    4,  12, 8,  8,  4,  4,  8,  4,  12, 8,  8,  8, 4,  4,  8, 4,  // 1
+    8,  12, 8,  8,  4,  4,  8,  4,  8,  8,  8,  8, 4,  4,  8, 4,  // 2
+    8,  12, 8,  8,  12, 12, 12, 4,  8,  8,  8,  8, 4,  4,  8, 4,  // 3
+    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,  // 4
+    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,  // 5
+    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,  // 6
+    8,  8,  8,  8,  8,  8,  4,  8,  4,  4,  4,  4, 4,  4,  8, 4,  // 7
+    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,  // 8
+    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,  // 9
+    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,  // a
+    4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4, 4,  4,  8, 4,  // b
+    8,  12, 12, 16, 12, 16, 8,  16, 8,  16, 12, 4, 12, 24, 8, 16, // c
+    8,  12, 12, 0,  12, 16, 8,  16, 8,  16, 12, 0, 12, 0,  8, 16, // d
+    12, 12, 8,  0,  0,  16, 8,  16, 16, 4,  16, 0, 0,  0,  8, 16, // e
+    12, 12, 8,  4,  0,  16, 8,  16, 12, 8,  16, 4, 0,  0,  8, 16  // f
+};
+// clang-format off
+
 void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
   registers regs;
   context ctx;
@@ -19,6 +40,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
   bool running = true;
   while (running) {
     uint8_t op = fetch_imm_n(&regs.PC, ram);
+    ctx.cycle += CYCLE_LENGHTS[op];
 
     switch (op) {
     case 0x00:

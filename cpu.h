@@ -39,6 +39,7 @@ typedef struct registers {
 
 typedef struct context {
   bool IME;
+  uint8_t cycle;
 } context;
 
 // load instructions
