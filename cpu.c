@@ -1069,7 +1069,7 @@ void adc_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
   adc_r_n(reg1, (*reg2), f);
 }
 
-void adc_r_n_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
+void adc_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
   adc_r_n(reg, (*ram)[addr], f);
 }
 
@@ -1483,8 +1483,8 @@ void jp_nz(uint8_t *f, uint16_t addr, uint16_t *pc) {
 
 // returns
 void ret(registers *regs, uint8_t **ram) {
-  uint8_t lsb = (*ram)[regs->SP--];
-  uint8_t msb = (*ram)[regs->SP--];
+  uint8_t lsb = read(regs->SP--, ram);
+  uint8_t msb = read(regs->SP--, ram);
   regs->PC = (msb << 8) | lsb;
 }
 void ret_nz(registers *regs, uint8_t **ram) {
@@ -1601,6 +1601,14 @@ void chk_zero(uint16_t val, uint8_t *f) {
     clear_f(f, FLAG_MASK_Z);
   }
 }
+
+uint16_t fetch_imm_nn(uint16_t *pc, uint8_t **ram) {
+  uint8_t lsb = fetch_imm_n(pc, ram);
+  uint8_t msb = fetch_imm_n(pc, ram);
+  return (msb << 8) | lsb;
+}
+
+uint8_t fetch_imm_n(uint16_t *pc, uint8_t **ram) { return read((*pc)++, ram); }
 
 uint8_t read(uint16_t addr, uint8_t **ram) { return (*ram)[addr]; }
 
