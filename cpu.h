@@ -1,6 +1,7 @@
 #ifndef CPU_HEADER_INCLUDED
 #define CPU_HEADER_INCLUDED
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef struct registers {
@@ -35,6 +36,10 @@ typedef struct registers {
   uint16_t SP;
   uint16_t PC;
 } registers;
+
+typedef struct context {
+  bool IME;
+} context;
 
 // load instructions
 void ld_r_r(uint8_t *reg1, uint8_t *reg2);
@@ -107,26 +112,38 @@ void scf(uint8_t *f);
 void ccf(uint8_t *f);
 
 // bit manipulation instructions
+// rotate left circular
 void rlc(uint8_t *reg, uint8_t *f);
 void rlca(uint8_t *reg, uint8_t *f);
 void rlc_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
+
+// rotate left through carry
 void rl(uint8_t *reg, uint8_t *f);
 void rla(uint8_t *reg, uint8_t *f);
 void rl_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 
+// rotate right circular
 void rrc(uint8_t *reg, uint8_t *f);
 void rrca(uint8_t *reg, uint8_t *f);
 void rrc_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
+
+// rotate right through carry
+void rr(uint8_t *reg, uint8_t *f);
 void rra(uint8_t *reg, uint8_t *f);
 void rr_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 
+// shift left arithmetic
 void sla(uint8_t *reg, uint8_t *f);
 void sla_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
+
+// shift right arithmetic
 void sra(uint8_t *reg, uint8_t *f);
 void sra_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 
 void swap(uint8_t *reg, uint8_t *f);
 void swap_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
+
+// shift left logical
 void srl(uint8_t *reg, uint8_t *f);
 void srl_indr(uint16_t addr, uint8_t *f, uint8_t **ram);
 
@@ -154,26 +171,26 @@ void jp_z(uint8_t *f, uint16_t addr, uint16_t *pc);
 void jp_nc(uint8_t *f, uint16_t addr, uint16_t *pc);
 void jp_nz(uint8_t *f, uint16_t addr, uint16_t *pc);
 
-void ret(uint16_t *pc, uint16_t *sp);
-void ret_nz(uint8_t *f, uint16_t *pc, uint16_t *sp);
-void ret_z(uint8_t *f, uint16_t *pc, uint16_t *sp);
-void ret_nc(uint8_t *f, uint16_t *pc, uint16_t *sp);
-void ret_c(uint8_t *f, uint16_t *pc, uint16_t *sp);
-void reti(uint8_t *f, uint16_t *pc, uint16_t *sp);
+void ret(registers *regs, uint8_t **ram);
+void ret_nz(registers *regs, uint8_t **ram);
+void ret_z(registers *regs, uint8_t **ram);
+void ret_nc(registers *regs, uint8_t **ram);
+void ret_c(registers *regs, uint8_t **ram);
+void reti(registers *regs, uint8_t **ram, context *ctx);
 
-void call(uint16_t *pc, uint16_t *sp);
-void call_nz(uint8_t *f, uint16_t addr, uint16_t *pc, uint16_t *sp);
-void call_nc(uint8_t *f, uint16_t addr, uint16_t *pc, uint16_t *sp);
-void call_c(uint8_t *f, uint16_t addr, uint16_t *pc, uint16_t *sp);
-void call_z(uint8_t *f, uint16_t addr, uint16_t *pc, uint16_t *sp);
+void call(registers *regs, uint16_t addr, uint8_t **ram);
+void call_nz(registers *regs, uint16_t addr, uint8_t **ram);
+void call_nc(registers *regs, uint16_t addr, uint8_t **ram);
+void call_c(registers *regs, uint16_t addr, uint8_t **ram);
+void call_z(registers *regs, uint16_t addr, uint8_t **ram);
 
-void rst(uint16_t *pc, uint16_t *sp, uint16_t rstv);
+void rst(registers *regs, uint8_t **ram, uint16_t rstv);
 
 // misc instructions
 void stop(uint8_t n);
 void halt();
-void ei(uint8_t *f);
-void di(uint8_t *f);
+void ei(context *ctx);
+void di(context *ctx);
 
 // helpers
 void tick(void);
