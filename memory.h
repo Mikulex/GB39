@@ -45,6 +45,27 @@ typedef struct hardware {
   uint8_t NR42;
   uint8_t NR43;
   uint8_t NR44;
+  uint8_t LCDC;
+  uint8_t LY;
+  uint8_t LYC;
+  uint8_t STAT;
+  uint8_t SCY;
+  uint8_t SCX;
+  uint8_t WY;
+  uint8_t WX;
+  uint8_t BGP;
+  uint8_t VBK;
+  uint8_t disable_boot_rom;
+  uint8_t HDMA1;
+  uint8_t HDMA2;
+  uint8_t HDMA3;
+  uint8_t HDMA4;
+  uint8_t HDMA5;
+  uint8_t BCPS_BGPI;
+  uint8_t BCPD_BGPD;
+  uint8_t OCPS_OBPI;
+  uint8_t OCPD_OBPD;
+  uint8_t CVBK;
 } hardware;
 
 typedef struct bank {
