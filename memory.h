@@ -4,20 +4,34 @@
 #include <stdint.h>
 
 // Memory Map
-#define BANK_ZERO_ADDR 0x0000    // 16 KiB ROM bank 00
-#define BANK_N_ADDR 0x4000       // 16 KiB ROM Bank 01~NN
-#define VRAM_ADDR 0x8000         // 8 KiB Video RAM (VRAM)
-#define EXTERNAL_RAM_ADDR 0xA000 // 8 KiB External RAM
-#define WRAM_ZERO_ADDR 0xC000    // 4 KiB Work RAM (WRAM)
-#define WRAM_N_ADDR 0xD000       // 4 KiB Work RAM (WRAM)
-#define MIRROR_ADDR 0xE000       // Mirror of C000~DDFF (ECHO RAM)
-#define OAM_ADDR 0xFE00          // Object attribute memory (OAM)
-#define UNUSED_ADDR 0xFEA0       // Not Usable
-#define IO_ADDR 0xFF00           // I/O Registers
-#define HRAM_ADDR 0xFF80         // High RAM (HRAM)
-#define IE_ADDR 0xFFFF           // Interrupt Enable register (IE)
+#define BANK_ZERO_START 0x0000 // 16 KiB ROM bank 00
+#define BANK_ZERO_END 0x3FFF
+#define BANK_N_START 0x4000 // 16 KiB ROM Bank 01~NN
+#define BANK_N_END 0x7FFF
+#define VRAM_START 0x8000 // 8 KiB Video RAM (VRAM)
+#define VRAM_END 0x9FFF
+#define EXTERNAL_RAM_START 0xA000 // 8 KiB External RAM
+#define EXTERNAL_RAM_END 0xBFFF
+#define WRAM_ZERO_START 0xC000 // 4 KiB Work RAM (WRAM)
+#define WRAM_ZERO_END 0xCFFF
+#define WRAM_N_START 0xD000 // 4 KiB Work RAM (WRAM)
+#define WRAM_N_END 0xDFFF
+#define MIRROR_Z_START 0xE000 // Mirror of C000~CFFF (ECHO RAM)
+#define MIRROR_Z_END 0xEFFF
+#define MIRROR_N_START 0xF000 // Mirror of D000~DDFF (ECHO RAM)
+#define MIRROR_N_END 0xFDFF
+#define OAM_START 0xFE00 // Object attribute memory (OAM)
+#define OAM_END 0xFE9F
+#define UNUSED_START 0xFEA0 // Not Usable
+#define UNUSED_END 0xFEFF
+#define IO_START 0xFF00 // I/O Registers
+#define IO_END 0xFF7F
+#define HRAM_START 0xFF80 // High RAM (HRAM)
+#define HRAM_END 0xFFFE
+#define IE_START 0xFFFF // Interrupt Enable register (IE)
+#define IE_END 0xFFFF
 
-typedef struct hardware {
+typedef struct hardware_regs {
   uint8_t JOYP;
   uint8_t SB;
   uint8_t SC;
@@ -66,6 +80,12 @@ typedef struct hardware {
   uint8_t OCPS_OBPI;
   uint8_t OCPD_OBPD;
   uint8_t CVBK;
+  uint8_t IME;
+} hardware_regs;
+
+typedef union hardware {
+  hardware_regs regs;
+  uint8_t mappings[sizeof(hardware_regs) / sizeof(uint8_t)];
 } hardware;
 
 typedef struct bank {

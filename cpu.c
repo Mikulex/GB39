@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "memory.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -33,13 +34,13 @@ uint8_t CYCLE_LENGHTS[] = {
 };
 // clang-format off
 
-void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
+void start(uint8_t **boot_rom, bus *bus, uint8_t **vram) {
   registers regs;
   context ctx;
 
   bool running = true;
   while (running) {
-    uint8_t op = fetch_imm_n(&regs.PC, ram);
+    uint8_t op = fetch_imm_n(&regs.PC, bus);
     ctx.cycle += CYCLE_LENGHTS[op];
 
     switch (op) {
@@ -47,10 +48,10 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       // noop
       break;
     case 0x01:
-      ld_rr_nn(&regs.BC, fetch_imm_nn(&regs.PC, ram));
+      ld_rr_nn(&regs.BC, fetch_imm_nn(&regs.PC, bus));
       break;
     case 0x02:
-      ld_indr_r(regs.BC, &regs.A, ram);
+      ld_indr_r(regs.BC, &regs.A, bus);
       break;
     case 0x03:
       inc_rr(&regs.BC);
@@ -62,19 +63,19 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       dec_r(&regs.B, &regs.F);
       break;
     case 0x06:
-      ld_r_n(&regs.B, fetch_imm_n(&regs.PC, ram));
+      ld_r_n(&regs.B, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x07:
       rlca(&regs.A, &regs.F);
       break;
     case 0x08:
-      ld_indr_rr(fetch_imm_nn(&regs.PC, ram), &regs.SP, ram);
+      ld_indr_rr(fetch_imm_nn(&regs.PC, bus), &regs.SP, bus);
       break;
     case 0x09:
       add_rr_rr(&regs.HL, &regs.BC, &regs.F);
       break;
     case 0x0a:
-      ld_r_indr(&regs.A, regs.BC, ram);
+      ld_r_indr(&regs.A, regs.BC, bus);
       break;
     case 0x0b:
       dec_rr(&regs.BC);
@@ -86,7 +87,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       dec_r(&regs.C, &regs.F);
       break;
     case 0x0e:
-      ld_r_n(&regs.C, fetch_imm_n(&regs.PC, ram));
+      ld_r_n(&regs.C, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x0f:
       rrca(&regs.A, &regs.F);
@@ -95,7 +96,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       stop(0x00);
       break;
     case 0x11:
-      ld_rr_nn(&regs.DE, fetch_imm_nn(&regs.PC, ram));
+      ld_rr_nn(&regs.DE, fetch_imm_nn(&regs.PC, bus));
       break;
     case 0x12:
       inc_rr(&regs.DE);
@@ -107,22 +108,22 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       dec_r(&regs.D, &regs.F);
       break;
     case 0x15:
-      ld_r_n(&regs.D, fetch_imm_n(&regs.PC, ram));
+      ld_r_n(&regs.D, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x16:
-      ld_r_n(&regs.D, fetch_imm_n(&regs.PC, ram));
+      ld_r_n(&regs.D, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x17:
       rla(&regs.A, &regs.F);
       break;
     case 0x18:
-      jr(&regs.PC, fetch_imm_n(&regs.PC, ram));
+      jr(&regs.PC, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x19:
       add_rr_rr(&regs.HL, &regs.DE, &regs.F);
       break;
     case 0x1a:
-      ld_r_indr(&regs.A, regs.DE, ram);
+      ld_r_indr(&regs.A, regs.DE, bus);
       break;
     case 0x1b:
       dec_rr(&regs.DE);
@@ -134,19 +135,19 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       dec_r(&regs.E, &regs.F);
       break;
     case 0x1e:
-      ld_r_n(&regs.E, fetch_imm_n(&regs.PC, ram));
+      ld_r_n(&regs.E, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x1f:
       rra(&regs.A, &regs.F);
       break;
     case 0x20:
-      jr_nz(&regs.F, &regs.PC, fetch_imm_n(&regs.PC, ram));
+      jr_nz(&regs.F, &regs.PC, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x21:
-      ld_rr_nn(&regs.HL, fetch_imm_nn(&regs.PC, ram));
+      ld_rr_nn(&regs.HL, fetch_imm_nn(&regs.PC, bus));
       break;
     case 0x22:
-      ld_indr_r(regs.HL, &regs.A, ram);
+      ld_indr_r(regs.HL, &regs.A, bus);
       regs.HL++;
       break;
     case 0x23:
@@ -159,20 +160,20 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       dec_r(&regs.H, &regs.F);
       break;
     case 0x26:
-      ld_r_n(&regs.H, fetch_imm_n(&regs.PC, ram));
+      ld_r_n(&regs.H, fetch_imm_n(&regs.PC, bus));
       regs.PC++;
       break;
     case 0x27:
       daa(&regs.A, &regs.F);
       break;
     case 0x28:
-      jr_z(&regs.F, &regs.PC, fetch_imm_n(&regs.PC, ram));
+      jr_z(&regs.F, &regs.PC, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x29:
       ld_rr_rr(&regs.HL, &regs.HL);
       break;
     case 0x2a:
-      ld_r_indr(&regs.A, regs.HL, ram);
+      ld_r_indr(&regs.A, regs.HL, bus);
       regs.HL++;
       break;
     case 0x2b:
@@ -185,44 +186,44 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       dec_r(&regs.L, &regs.F);
       break;
     case 0x2e:
-      ld_r_n(&regs.L, fetch_imm_n(&regs.PC, ram));
+      ld_r_n(&regs.L, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x2f:
       cpl(&regs.A, &regs.F);
       break;
     case 0x30:
-      jr_nc(&regs.F, &regs.PC, fetch_imm_n(&regs.PC, ram));
+      jr_nc(&regs.F, &regs.PC, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x31:
-      ld_rr_nn(&regs.SP, fetch_imm_nn(&regs.PC, ram));
+      ld_rr_nn(&regs.SP, fetch_imm_nn(&regs.PC, bus));
       break;
     case 0x32:
-      ld_indr_r(regs.HL, &regs.A, ram);
+      ld_indr_r(regs.HL, &regs.A, bus);
       regs.HL--;
       break;
     case 0x33:
       inc_rr(&regs.SP);
       break;
     case 0x34:
-      inc_indr(regs.HL, &regs.F, ram);
+      inc_indr(regs.HL, &regs.F, bus);
       break;
     case 0x35:
-      dec_indr(regs.HL, &regs.F, ram);
+      dec_indr(regs.HL, &regs.F, bus);
       break;
     case 0x36:
-      ld_indr_nn(regs.HL, fetch_imm_n(&regs.PC, ram), ram);
+      ld_indr_nn(regs.HL, fetch_imm_n(&regs.PC, bus), bus);
       break;
     case 0x37:
       scf(&regs.F);
       break;
     case 0x38:
-      jr_c(&regs.F, &regs.PC, fetch_imm_n(&regs.PC, ram));
+      jr_c(&regs.F, &regs.PC, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x39:
       add_rr_rr(&regs.HL, &regs.SP, &regs.F);
       break;
     case 0x3a:
-      ld_r_indr(&regs.A, regs.HL, ram);
+      ld_r_indr(&regs.A, regs.HL, bus);
       regs.HL--;
       break;
     case 0x3b:
@@ -235,7 +236,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       dec_r(&regs.A, &regs.F);
       break;
     case 0x3e:
-      ld_r_n(&regs.A, fetch_imm_n(&regs.PC, ram));
+      ld_r_n(&regs.A, fetch_imm_n(&regs.PC, bus));
       break;
     case 0x3f:
       ccf(&regs.F);
@@ -259,7 +260,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       ld_r_r(&regs.B, &regs.L);
       break;
     case 0x46:
-      ld_r_indr(&regs.B, regs.HL, ram);
+      ld_r_indr(&regs.B, regs.HL, bus);
       break;
     case 0x47:
       ld_r_r(&regs.B, &regs.A);
@@ -283,7 +284,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       ld_r_r(&regs.C, &regs.L);
       break;
     case 0x4e:
-      ld_r_indr(&regs.C, regs.HL, ram);
+      ld_r_indr(&regs.C, regs.HL, bus);
       break;
     case 0x4f:
       ld_r_r(&regs.C, &regs.A);
@@ -307,7 +308,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       ld_r_r(&regs.D, &regs.L);
       break;
     case 0x56:
-      ld_r_indr(&regs.D, regs.HL, ram);
+      ld_r_indr(&regs.D, regs.HL, bus);
       break;
     case 0x57:
       ld_r_r(&regs.D, &regs.A);
@@ -331,7 +332,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       ld_r_r(&regs.E, &regs.L);
       break;
     case 0x5e:
-      ld_r_indr(&regs.E, regs.HL, ram);
+      ld_r_indr(&regs.E, regs.HL, bus);
       break;
     case 0x5f:
       ld_r_r(&regs.E, &regs.A);
@@ -355,7 +356,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       ld_r_r(&regs.H, &regs.L);
       break;
     case 0x66:
-      ld_r_indr(&regs.H, regs.HL, ram);
+      ld_r_indr(&regs.H, regs.HL, bus);
       break;
     case 0x67:
       ld_r_r(&regs.H, &regs.A);
@@ -379,34 +380,34 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       ld_r_r(&regs.L, &regs.L);
       break;
     case 0x6e:
-      ld_r_indr(&regs.L, regs.HL, ram);
+      ld_r_indr(&regs.L, regs.HL, bus);
       break;
     case 0x6f:
       ld_r_r(&regs.L, &regs.A);
       break;
     case 0x70:
-      ld_indr_r(regs.HL, &regs.B, ram);
+      ld_indr_r(regs.HL, &regs.B, bus);
       break;
     case 0x71:
-      ld_indr_r(regs.HL, &regs.C, ram);
+      ld_indr_r(regs.HL, &regs.C, bus);
       break;
     case 0x72:
-      ld_indr_r(regs.HL, &regs.D, ram);
+      ld_indr_r(regs.HL, &regs.D, bus);
       break;
     case 0x73:
-      ld_indr_r(regs.HL, &regs.E, ram);
+      ld_indr_r(regs.HL, &regs.E, bus);
       break;
     case 0x74:
-      ld_indr_r(regs.HL, &regs.H, ram);
+      ld_indr_r(regs.HL, &regs.H, bus);
       break;
     case 0x75:
-      ld_indr_r(regs.HL, &regs.L, ram);
+      ld_indr_r(regs.HL, &regs.L, bus);
       break;
     case 0x76:
       halt();
       break;
     case 0x77:
-      ld_indr_r(regs.HL, &regs.A, ram);
+      ld_indr_r(regs.HL, &regs.A, bus);
       break;
     case 0x78:
       ld_r_r(&regs.A, &regs.B);
@@ -427,7 +428,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       ld_r_r(&regs.A, &regs.L);
       break;
     case 0x7e:
-      ld_r_indr(&regs.A, regs.HL, ram);
+      ld_r_indr(&regs.A, regs.HL, bus);
       break;
     case 0x7f:
       ld_r_r(&regs.A, &regs.A);
@@ -451,7 +452,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       add_r_r(&regs.A, &regs.L, &regs.F);
       break;
     case 0x86:
-      add_r_indr(&regs.A, regs.HL, &regs.F, ram);
+      add_r_indr(&regs.A, regs.HL, &regs.F, bus);
       break;
     case 0x87:
       add_r_r(&regs.A, &regs.A, &regs.F);
@@ -475,7 +476,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       adc_r_r(&regs.A, &regs.L, &regs.F);
       break;
     case 0x8e:
-      adc_r_indr(&regs.A, regs.HL, &regs.F, ram);
+      adc_r_indr(&regs.A, regs.HL, &regs.F, bus);
       break;
     case 0x8f:
       adc_r_r(&regs.A, &regs.A, &regs.F);
@@ -499,7 +500,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       sub_r_r(&regs.A, &regs.L, &regs.F);
       break;
     case 0x96:
-      sub_r_indr(&regs.A, regs.HL, &regs.F, ram);
+      sub_r_indr(&regs.A, regs.HL, &regs.F, bus);
       break;
     case 0x97:
       sub_r_r(&regs.A, &regs.A, &regs.F);
@@ -523,7 +524,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       sbc_r_r(&regs.A, &regs.L, &regs.F);
       break;
     case 0x9e:
-      sbc_r_indr(&regs.A, regs.HL, &regs.F, ram);
+      sbc_r_indr(&regs.A, regs.HL, &regs.F, bus);
       break;
     case 0x9f:
       sbc_r_r(&regs.A, &regs.A, &regs.F);
@@ -547,7 +548,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       and_r_r(&regs.A, &regs.L, &regs.F);
       break;
     case 0xa6:
-      and_r_indr(&regs.A, regs.HL, &regs.F, ram);
+      and_r_indr(&regs.A, regs.HL, &regs.F, bus);
       break;
     case 0xa7:
       and_r_r(&regs.A, &regs.A, &regs.F);
@@ -571,7 +572,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       xor_r_r(&regs.A, &regs.L, &regs.F);
       break;
     case 0xae:
-      xor_r_indr(&regs.A, regs.HL, &regs.F, ram);
+      xor_r_indr(&regs.A, regs.HL, &regs.F, bus);
       break;
     case 0xaf:
       xor_r_r(&regs.A, &regs.A, &regs.F);
@@ -595,7 +596,7 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       or_r_r(&regs.A, &regs.L, &regs.F);
       break;
     case 0xb6:
-      or_r_indr(&regs.A, regs.HL, &regs.F, ram);
+      or_r_indr(&regs.A, regs.HL, &regs.F, bus);
       break;
     case 0xb7:
       or_r_r(&regs.A, &regs.A, &regs.F);
@@ -619,115 +620,115 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       cp_r_r(&regs.A, &regs.L, &regs.F);
       break;
     case 0xbe:
-      cp_r_indr(&regs.A, regs.HL, &regs.F, ram);
+      cp_r_indr(&regs.A, regs.HL, &regs.F, bus);
       break;
     case 0xbf:
       cp_r_r(&regs.A, &regs.A, &regs.F);
       break;
     case 0xc0:
-      ret_nz(&regs, ram);
+      ret_nz(&regs, bus);
       break;
     case 0xc1:
-      pop_rr(&regs.BC, &regs.SP, ram);
+      pop_rr(&regs.BC, &regs.SP, bus);
       break;
     case 0xc2:
-      jp_nz(&regs.F, (fetch_imm_nn(&regs.PC, ram)), &regs.PC);
+      jp_nz(&regs.F, (fetch_imm_nn(&regs.PC, bus)), &regs.PC);
       break;
     case 0xc3:
-      jp(fetch_imm_nn(&regs.PC, ram), &regs.PC);
+      jp(fetch_imm_nn(&regs.PC, bus), &regs.PC);
       break;
     case 0xc4:
-      call_nz(&regs, (fetch_imm_nn(&regs.PC, ram)), ram);
+      call_nz(&regs, (fetch_imm_nn(&regs.PC, bus)), bus);
       break;
     case 0xc5:
-      push_rr(&regs.BC, &regs.SP, ram);
+      push_rr(&regs.BC, &regs.SP, bus);
       break;
     case 0xc6:
-      add_r_n(&regs.A, fetch_imm_n(&regs.PC, ram), &regs.F);
+      add_r_n(&regs.A, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xc7:
-      rst(&regs, ram, 0x00);
+      rst(&regs, bus, 0x00);
       break;
     case 0xc8:
-      ret_z(&regs, ram);
+      ret_z(&regs, bus);
       break;
     case 0xc9:
-      ret(&regs, ram);
+      ret(&regs, bus);
       break;
     case 0xca:
-      jp_z(&regs.F, fetch_imm_nn(&regs.PC, ram), &regs.PC);
+      jp_z(&regs.F, fetch_imm_nn(&regs.PC, bus), &regs.PC);
       break;
     case 0xcb:
-      ex_cb_instr(&regs, fetch_imm_n(&regs.PC, ram), ram);
+      ex_cb_instr(&regs, fetch_imm_n(&regs.PC, bus), bus);
       break;
     case 0xcc:
-      call_nc(&regs, (fetch_imm_nn(&regs.PC, ram)), ram);
+      call_nc(&regs, (fetch_imm_nn(&regs.PC, bus)), bus);
       break;
     case 0xcd:
-      call(&regs, (fetch_imm_nn(&regs.PC, ram)), ram);
+      call(&regs, (fetch_imm_nn(&regs.PC, bus)), bus);
       break;
     case 0xce:
-      adc_r_n(&regs.A, fetch_imm_n(&regs.PC, ram), &regs.F);
+      adc_r_n(&regs.A, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xcf:
-      rst(&regs, ram, 0x08);
+      rst(&regs, bus, 0x08);
       break;
     case 0xd0:
-      ret_nc(&regs, ram);
+      ret_nc(&regs, bus);
       break;
     case 0xd1:
-      pop_rr(&regs.DE, &regs.SP, ram);
+      pop_rr(&regs.DE, &regs.SP, bus);
       break;
     case 0xd2:
-      jp_nc(&regs.F, (fetch_imm_nn(&regs.PC, ram)), &regs.PC);
+      jp_nc(&regs.F, (fetch_imm_nn(&regs.PC, bus)), &regs.PC);
       break;
     case 0xd3:
       // noop
       break;
     case 0xd4:
-      call_nc(&regs, (fetch_imm_nn(&regs.PC, ram)), ram);
+      call_nc(&regs, (fetch_imm_nn(&regs.PC, bus)), bus);
       break;
     case 0xd5:
-      push_rr(&regs.DE, &regs.SP, ram);
+      push_rr(&regs.DE, &regs.SP, bus);
       break;
     case 0xd6:
-      sub_r_n(&regs.A, fetch_imm_n(&regs.PC, ram), &regs.F);
+      sub_r_n(&regs.A, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xd7:
-      rst(&regs, ram, 0x10);
+      rst(&regs, bus, 0x10);
       break;
     case 0xd8:
-      ret_c(&regs, ram);
+      ret_c(&regs, bus);
       break;
     case 0xd9:
-      reti(&regs, ram, &ctx);
+      reti(&regs, bus, &ctx);
       break;
     case 0xda:
-      jp_c(&regs.F, (fetch_imm_nn(&regs.PC, ram)), &regs.PC);
+      jp_c(&regs.F, (fetch_imm_nn(&regs.PC, bus)), &regs.PC);
       break;
     case 0xdb:
       // noop
       break;
     case 0xdc:
-      call_c(&regs, (fetch_imm_nn(&regs.PC, ram)), ram);
+      call_c(&regs, (fetch_imm_nn(&regs.PC, bus)), bus);
       break;
     case 0xdd:
       // noop
       break;
     case 0xde:
-      adc_r_n(&regs.A, fetch_imm_n(&regs.PC, ram), &regs.F);
+      adc_r_n(&regs.A, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xdf:
-      rst(&regs, ram, 0x18);
+      rst(&regs, bus, 0x18);
       break;
     case 0xe0:
-      ldh_indr_r(fetch_imm_n(&regs.PC, ram), &regs.A, ram);
+      ldh_indr_r(fetch_imm_n(&regs.PC, bus), &regs.A, bus);
       break;
     case 0xe1:
-      pop_rr(&regs.HL, &regs.SP, ram);
+      pop_rr(&regs.HL, &regs.SP, bus);
       break;
     case 0xe2:
-      ldh_indr_r(read(regs.C, ram), &regs.A, ram);
+      ldh_indr_r(read(regs.C, bus), &regs.A, bus);
       break;
     case 0xe3:
       // noop
@@ -736,22 +737,22 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       // noop
       break;
     case 0xe5:
-      push_rr(&regs.HL, &regs.SP, ram);
+      push_rr(&regs.HL, &regs.SP, bus);
       break;
     case 0xe6:
-      and_r_n(&regs.A, fetch_imm_n(&regs.PC, ram), &regs.F);
+      and_r_n(&regs.A, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xe7:
-      rst(&regs, ram, 0x20);
+      rst(&regs, bus, 0x20);
       break;
     case 0xe8:
-      add_rr_n(&regs.SP, fetch_imm_n(&regs.PC, ram), &regs.F);
+      add_rr_n(&regs.SP, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xe9:
       jp_rr(&regs.HL, &regs.PC);
       break;
     case 0xea:
-      ld_indr_r(fetch_imm_nn(&regs.PC, ram), &regs.A, ram);
+      ld_indr_r(fetch_imm_nn(&regs.PC, bus), &regs.A, bus);
       break;
     case 0xeb:
     case 0xec:
@@ -759,19 +760,19 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       // undefined
       break;
     case 0xee:
-      xor_r_n(&regs.A, fetch_imm_n(&regs.PC, ram), &regs.F);
+      xor_r_n(&regs.A, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xef:
-      rst(&regs, ram, 0x28);
+      rst(&regs, bus, 0x28);
       break;
     case 0xf0:
-      ldh_r_indr(&regs.A, fetch_imm_n(&regs.PC, ram), ram);
+      ldh_r_indr(&regs.A, fetch_imm_n(&regs.PC, bus), bus);
       break;
     case 0xf1:
-      pop_rr(&regs.AF, &regs.SP, ram);
+      pop_rr(&regs.AF, &regs.SP, bus);
       break;
     case 0xf2:
-      ld_r_indr(&regs.A, regs.C, ram);
+      ld_r_indr(&regs.A, regs.C, bus);
       break;
     case 0xf3:
       di(&ctx);
@@ -780,22 +781,22 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       // undefined
       break;
     case 0xf5:
-      push_rr(&regs.AF, &regs.SP, ram);
+      push_rr(&regs.AF, &regs.SP, bus);
       break;
     case 0xf6:
-      or_r_n(&regs.A, fetch_imm_n(&regs.PC, ram), &regs.F);
+      or_r_n(&regs.A, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xf7:
-      rst(&regs, ram, 0x30);
+      rst(&regs, bus, 0x30);
       break;
     case 0xf8:
-      ld_hl_sp_dd(&regs, fetch_imm_n(&regs.PC, ram), ram);
+      ld_hl_sp_dd(&regs, fetch_imm_n(&regs.PC, bus), bus);
       break;
     case 0xf9:
       ld_rr_rr(&regs.SP, &regs.HL);
       break;
     case 0xfa:
-      ld_r_indr(&regs.A, fetch_imm_nn(&regs.PC, ram), ram);
+      ld_r_indr(&regs.A, fetch_imm_nn(&regs.PC, bus), bus);
       break;
     case 0xfb:
       ei(&ctx);
@@ -805,17 +806,17 @@ void start(uint8_t **boot_rom, uint8_t **ram, uint8_t **vram) {
       // undefined
       break;
     case 0xfe:
-      cp_r_n(&regs.A, fetch_imm_n(&regs.PC, ram), &regs.F);
+      cp_r_n(&regs.A, fetch_imm_n(&regs.PC, bus), &regs.F);
       break;
     case 0xff:
-      rst(&regs, ram, 0x38);
+      rst(&regs, bus, 0x38);
       break;
     }
   }
   return;
 }
 
-void ex_cb_instr(registers *regs, uint8_t op, uint8_t **ram) {
+void ex_cb_instr(registers *regs, uint8_t op, bus *bus) {
   uint8_t r = (op & 0x01) % 0x08;
   uint8_t reg;
   uint8_t arg = (0b00111000 & op) >> 3;
@@ -849,49 +850,49 @@ void ex_cb_instr(registers *regs, uint8_t op, uint8_t **ram) {
       rlc(&reg, &regs->F);
     break;
   case 0x06:
-    rlc_indr(regs->HL, &regs->F, ram);
+    rlc_indr(regs->HL, &regs->F, bus);
     break;
   case 0x08:  case 0x09:  case 0x0a:  case 0x0b:  case 0x0c:  case 0x0d:  case 0x0f:
     rrc(&reg, &regs->F);
     break;
   case 0x0e:
-    rrc_indr(regs->HL, &regs->F, ram);
+    rrc_indr(regs->HL, &regs->F, bus);
     break;
   case 0x10:  case 0x11:  case 0x12:  case 0x13:  case 0x14:  case 0x15:  case 0x17:
     rl(&regs->A, &regs->F);
     break;
   case 0x16:
-    rl_indr(regs->HL, &regs->F, ram);
+    rl_indr(regs->HL, &regs->F, bus);
     break;
   case 0x18:  case 0x19:  case 0x1a:  case 0x1b:  case 0x1c:  case 0x1d:  case 0x1f:
     rr(&regs->A, &regs->F);
     break;
   case 0x1e:
-    rr_indr(regs->HL, &regs->F, ram);
+    rr_indr(regs->HL, &regs->F, bus);
     break;
   case 0x20:  case 0x21:  case 0x22:  case 0x23:  case 0x24:  case 0x25:  case 0x27:
     sla(&regs->A, &regs->F);
     break;
   case 0x26:
-    sla_indr(regs->HL, &regs->F, ram);
+    sla_indr(regs->HL, &regs->F, bus);
     break;
   case 0x28:  case 0x29:  case 0x2a:  case 0x2b:  case 0x2c:  case 0x2d:  case 0x2f:
     sra(&regs->A, &regs->F);
     break;
   case 0x2e:
-    sra_indr(regs->HL, &regs->F, ram);
+    sra_indr(regs->HL, &regs->F, bus);
     break;
   case 0x30:  case 0x31:  case 0x32:  case 0x33:  case 0x34:  case 0x35:  case 0x37:
     swap(&regs->A, &regs->F);
     break;
   case 0x36:
-    swap_indr(regs->HL, &regs->F, ram);
+    swap_indr(regs->HL, &regs->F, bus);
     break;
   case 0x38:  case 0x39:  case 0x3a:  case 0x3b:  case 0x3c:  case 0x3d:  case 0x3f:
     srl(&regs->A, &regs->F);
     break;
   case 0x3e:
-    srl_indr(regs->HL, &regs->F, ram);
+    srl_indr(regs->HL, &regs->F, bus);
     break;
   case 0x40:  case 0x41:  case 0x42:  case 0x43:  case 0x44:  case 0x45:  case 0x47:
   case 0x48:  case 0x49:  case 0x4a:  case 0x4b:  case 0x4c:  case 0x4d:  case 0x4f:
@@ -907,7 +908,7 @@ void ex_cb_instr(registers *regs, uint8_t op, uint8_t **ram) {
   case 0x56:  case 0x5e:  
   case 0x66:  case 0x6e:  
   case 0x76:  case 0x7e:  
-    bit_indr(arg, regs->HL, &regs->F, ram);
+    bit_indr(arg, regs->HL, &regs->F, bus);
     break;
   case 0x80:  case 0x81:  case 0x82:  case 0x83:  case 0x84:  case 0x85:  case 0x87:
   case 0x88:  case 0x89:  case 0x8a:  case 0x8b:  case 0x8c:  case 0x8d:  case 0x8f:
@@ -923,7 +924,7 @@ void ex_cb_instr(registers *regs, uint8_t op, uint8_t **ram) {
   case 0x96:  case 0x9e:  
   case 0xa6:  case 0xae:  
   case 0xb6:  case 0xbe:  
-    res_indr(arg, regs->HL, &regs->F, ram);
+    res_indr(arg, regs->HL, &regs->F, bus);
     break;
   case 0xc0:  case 0xc1:  case 0xc2:  case 0xc3:  case 0xc4:  case 0xc5:  case 0xc7:
   case 0xc8:  case 0xc9:  case 0xca:  case 0xcb:  case 0xcc:  case 0xcd:  case 0xcf:
@@ -939,7 +940,7 @@ void ex_cb_instr(registers *regs, uint8_t op, uint8_t **ram) {
   case 0xd6:  case 0xde:  
   case 0xe6:  case 0xee:  
   case 0xf6:  case 0xfe:  
-    set_indr(arg, regs->HL, &regs->F, ram);
+    set_indr(arg, regs->HL, &regs->F, bus);
     break;
   }
   // clang-format on
@@ -949,36 +950,34 @@ void ex_cb_instr(registers *regs, uint8_t op, uint8_t **ram) {
 
 void ld_r_r(uint8_t *reg1, uint8_t *reg2) { (*reg1) = (*reg2); }
 
-void ld_r_n(uint8_t *reg, uint8_t n) { (*reg) = n; }
+void ld_r_n(uint8_t *reg, uint8_t n) { *reg = n; }
 
-void ld_indr_r(uint16_t addr, uint8_t *reg, uint8_t **ram) {
-  write(addr, ram, (*reg));
+void ld_indr_r(uint16_t addr, uint8_t *reg, bus *bus) {
+  write(addr, bus, *reg);
 }
 
-void ld_indr_rr(uint16_t addr, uint16_t *reg, uint8_t **ram) {
-  write(addr, ram, (*reg));
+void ld_indr_rr(uint16_t addr, uint16_t *reg, bus *bus) {
+  write(addr, bus, *reg);
 }
 
-void ld_indr_nn(uint16_t addr, uint16_t n, uint8_t **ram) {
-  write(addr, ram, n);
-}
+void ld_indr_nn(uint16_t addr, uint16_t n, bus *bus) { write(addr, bus, n); }
 
-void ld_r_indr(uint8_t *reg, uint16_t addr, uint8_t **ram) {
-  (*reg) = read(addr, ram);
+void ld_r_indr(uint8_t *reg, uint16_t addr, bus *bus) {
+  *reg = read(addr, bus);
 }
 
 void ld_rr_rr(uint16_t *reg1, uint16_t *reg2) { (*reg1) = (*reg2); }
 
 void ld_rr_nn(uint16_t *reg1, uint16_t nn) { (*reg1) = nn; }
 
-void ldh_r_indr(uint8_t *reg, uint8_t addr, uint8_t **ram) {
-  (*reg) = read(0xFF00 + addr, ram);
+void ldh_r_indr(uint8_t *reg, uint8_t addr, bus *bus) {
+  *reg = read(0xFF00 + addr, bus);
 }
-void ldh_indr_r(uint8_t addr, uint8_t *reg, uint8_t **ram) {
-  write(0xFF00 + addr, ram, (*reg));
+void ldh_indr_r(uint8_t addr, uint8_t *reg, bus *bus) {
+  write(0xFF00 + addr, bus, *reg);
 }
 
-void ld_hl_sp_dd(registers *regs, uint8_t dd, uint8_t **ram) {
+void ld_hl_sp_dd(registers *regs, uint8_t dd, bus *bus) {
   uint16_t prev = regs->SP;
   int8_t signed_dd = (int8_t)dd;
   uint16_t addr = (regs->SP) + signed_dd;
@@ -999,20 +998,20 @@ void ld_hl_sp_dd(registers *regs, uint8_t dd, uint8_t **ram) {
     }
   }
 
-  regs->HL = read(addr, ram);
+  regs->HL = read(addr, bus);
   clear_f(&regs->F, FLAG_MASK_N);
   clear_f(&regs->F, FLAG_MASK_Z);
 }
 
-void push_rr(uint16_t *reg, uint16_t *sp, uint8_t **ram) {
-  write(--(*sp), ram, ((*reg) & 0xFF00) >> 8);
-  write(--(*sp), ram, ((*reg) & 0x00FF));
+void push_rr(uint16_t *reg, uint16_t *sp, bus *bus) {
+  write(--(*sp), bus, (*reg & 0xFF00) >> 8);
+  write(--(*sp), bus, (*reg & 0x00FF));
 }
 
-void pop_rr(uint16_t *reg, uint16_t *sp, uint8_t **ram) {
-  uint8_t lsb = read((*sp)++, ram);
-  uint8_t msb = read((*sp)++, ram);
-  (*reg) = (msb << 8) | lsb;
+void pop_rr(uint16_t *reg, uint16_t *sp, bus *bus) {
+  uint8_t lsb = read((*sp)++, bus);
+  uint8_t msb = read((*sp)++, bus);
+  *reg = (msb << 8) | lsb;
 }
 
 // arithmetic instructions
@@ -1020,23 +1019,29 @@ void pop_rr(uint16_t *reg, uint16_t *sp, uint8_t **ram) {
 void inc_rr(uint16_t *reg) { (*reg)++; }
 
 void inc_r(uint8_t *reg, uint8_t *f) {
-  uint8_t prev = (*reg);
+  uint8_t prev = *reg;
   (*reg)++;
-  chk_carry_r(prev, (*reg), f);
+  chk_carry_r(prev, *reg, f);
 }
 
-void inc_indr(uint16_t addr, uint8_t *f, uint8_t **ram) { (*ram)[addr]++; }
+void inc_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t val = read(addr, bus);
+  write(addr, bus, val + 1);
+}
 
 // dec
 void dec_rr(uint16_t *reg) { (*reg)--; }
 
 void dec_r(uint8_t *reg, uint8_t *f) {
-  uint8_t prev = (*reg);
+  uint8_t prev = *reg;
   (*reg)--;
-  chk_carry_r(prev, (*reg), f);
+  chk_carry_r(prev, *reg, f);
 }
 
-void dec_indr(uint16_t addr, uint8_t *f, uint8_t **ram) { (*ram)[addr]--; }
+void dec_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t val = read(addr, bus);
+  write(addr, bus, val - 1);
+}
 
 // add
 void add_rr_rr(uint16_t *reg1, uint16_t *reg2, uint8_t *f) {
@@ -1047,11 +1052,11 @@ void add_rr_rr(uint16_t *reg1, uint16_t *reg2, uint8_t *f) {
 }
 
 void add_rr_n(uint16_t *reg, uint8_t n, uint8_t *f) {
-  uint16_t prev = (*reg);
-  (*reg) += n;
+  uint16_t prev = *reg;
+  *reg += n;
   clear_f(f, FLAG_MASK_N);
   clear_f(f, FLAG_MASK_Z);
-  chk_carry_rr(prev, (*reg), f);
+  chk_carry_rr(prev, *reg, f);
 }
 
 void add_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
@@ -1062,54 +1067,54 @@ void add_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
   chk_carry_r(prev, (*reg1), f);
 }
 
-void add_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  uint8_t prev = (*reg);
-  (*reg) += (*ram)[addr];
-  chk_zero((*reg), f);
+void add_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t prev = *reg;
+  *reg += read(addr, bus);
+  chk_zero(*reg, f);
   clear_f(f, FLAG_MASK_N);
-  chk_carry_r(prev, (*reg), f);
+  chk_carry_r(prev, *reg, f);
 }
 
 void add_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
-  uint8_t prev = (*reg);
-  (*reg) += n;
-  chk_zero((*reg), f);
+  uint8_t prev = *reg;
+  *reg += n;
+  chk_zero(*reg, f);
   clear_f(f, FLAG_MASK_N);
-  chk_carry_r(prev, (*reg), f);
+  chk_carry_r(prev, *reg, f);
 }
 
 // adc
 void adc_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
-  uint8_t prev = (*reg);
-  (*reg) += n + (((*f) & FLAG_MASK_C) >> 3);
-  chk_zero((*reg), f);
+  uint8_t prev = *reg;
+  *reg += n + (((*f) & FLAG_MASK_C) >> 3);
+  chk_zero(*reg, f);
   clear_f(f, FLAG_MASK_N);
-  chk_carry_r(prev, (*reg), f);
+  chk_carry_r(prev, *reg, f);
 }
 
 void adc_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
   adc_r_n(reg1, (*reg2), f);
 }
 
-void adc_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  adc_r_n(reg, (*ram)[addr], f);
+void adc_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, bus *bus) {
+  adc_r_n(reg, read(addr, bus), f);
 }
 
 // sub
 void sub_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
-  uint8_t prev = (*reg);
-  (*reg) -= n;
-  chk_zero((*reg), f);
+  uint8_t prev = *reg;
+  *reg -= n;
+  chk_zero(*reg, f);
   set_f(f, FLAG_MASK_N);
-  chk_carry_r(prev, (*reg), f);
+  chk_carry_r(prev, *reg, f);
 }
 
 void sub_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
   sub_r_n(reg1, (*reg2), f);
 }
 
-void sub_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  sub_r_n(reg, (*ram)[addr], f);
+void sub_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, bus *bus) {
+  sub_r_n(reg, read(addr, bus), f);
 }
 
 // sbc
@@ -1117,28 +1122,28 @@ void sbc_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
   sbc_r_n(reg1, (*reg2), f);
 }
 
-void sbc_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  sbc_r_n(reg, (*ram)[addr], f);
+void sbc_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, bus *bus) {
+  sbc_r_n(reg, read(addr, bus), f);
 }
 
 void sbc_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
-  uint8_t prev = (*reg);
-  (*reg) -= n - (((*f) & FLAG_MASK_C) >> 3);
-  chk_zero((*reg), f);
+  uint8_t prev = *reg;
+  *reg -= n - (((*f) & FLAG_MASK_C) >> 3);
+  chk_zero(*reg, f);
   set_f(f, FLAG_MASK_N);
-  chk_carry_r(prev, (*reg), f);
+  chk_carry_r(prev, *reg, f);
 }
 
 // and
 void and_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
   and_r_n(reg1, (*reg2), f);
 }
-void and_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  and_r_n(reg, (*ram)[addr], f);
+void and_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, bus *bus) {
+  and_r_n(reg, read(addr, bus), f);
 }
 void and_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
-  (*reg) &= n;
-  chk_zero((*reg), f);
+  *reg &= n;
+  chk_zero(*reg, f);
   clear_f(f, FLAG_MASK_N);
   set_f(f, FLAG_MASK_H);
   clear_f(f, FLAG_MASK_C);
@@ -1147,12 +1152,12 @@ void and_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
 void xor_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
   xor_r_n(reg1, (*reg2), f);
 }
-void xor_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  xor_r_n(reg, (*ram)[addr], f);
+void xor_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, bus *bus) {
+  xor_r_n(reg, read(addr, bus), f);
 }
 void xor_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
-  (*reg) ^= n;
-  chk_zero((*reg), f);
+  *reg ^= n;
+  chk_zero(*reg, f);
   clear_f(f, FLAG_MASK_N);
   clear_f(f, FLAG_MASK_H);
   clear_f(f, FLAG_MASK_C);
@@ -1161,12 +1166,12 @@ void xor_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
 void or_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
   or_r_n(reg1, (*reg2), f);
 }
-void or_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  or_r_n(reg, (*ram)[addr], f);
+void or_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, bus *bus) {
+  or_r_n(reg, read(addr, bus), f);
 }
 void or_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
-  (*reg) |= n;
-  chk_zero((*reg), f);
+  *reg |= n;
+  chk_zero(*reg, f);
   clear_f(f, FLAG_MASK_N);
   clear_f(f, FLAG_MASK_H);
   clear_f(f, FLAG_MASK_C);
@@ -1174,18 +1179,18 @@ void or_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
 
 // cp
 void cp_r_r(uint8_t *reg1, uint8_t *reg2, uint8_t *f) {
-  (or_r_n(reg1, (*reg2), f));
+  or_r_n(reg1, (*reg2), f);
 }
 
-void cp_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  (or_r_n(reg, (*ram)[addr], f));
+void cp_r_indr(uint8_t *reg, uint16_t addr, uint8_t *f, bus *bus) {
+  or_r_n(reg, read(addr, bus), f);
 }
 
 void cp_r_n(uint8_t *reg, uint8_t n, uint8_t *f) {
-  uint8_t res = (*reg) - n;
+  uint8_t res = *reg - n;
   chk_zero(res, f);
   set_f(f, FLAG_MASK_N);
-  chk_carry_r(res, (*reg), f);
+  chk_carry_r(res, *reg, f);
 }
 
 void daa(uint8_t *a, uint8_t *flags) {
@@ -1225,19 +1230,19 @@ uint8_t rlc_n(uint8_t n, uint8_t *f) {
 }
 
 void rlc(uint8_t *reg, uint8_t *f) {
-  uint8_t res = rlc_n((*reg), f);
-  (*reg) = res;
+  uint8_t res = rlc_n(*reg, f);
+  *reg = res;
   chk_zero(res, f);
 }
 
-void rlc_indr(uint16_t addr, uint8_t *f, uint8_t **ram) {
-  uint8_t res = rlc_n((*ram)[addr], f);
-  (*ram)[addr] = res;
+void rlc_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t res = rlc_n(read(addr, bus), f);
+  write(addr, bus, res);
   chk_zero(res, f);
 }
 
 void rlca(uint8_t *reg, uint8_t *f) {
-  (*reg) = rlc_n((*reg), f);
+  *reg = rlc_n(*reg, f);
   clear_f(f, FLAG_MASK_Z);
 }
 
@@ -1257,19 +1262,19 @@ uint8_t rl_n(uint8_t n, uint8_t *f) {
 }
 
 void rl(uint8_t *reg, uint8_t *f) {
-  uint8_t res = rl_n((*reg), f);
-  (*reg) = res;
+  uint8_t res = rl_n(*reg, f);
+  *reg = res;
   chk_zero(res, f);
 }
 
-void rl_indr(uint16_t addr, uint8_t *f, uint8_t **ram) {
-  uint8_t res = rl_n((*ram)[addr], f);
-  (*ram)[addr] = res;
+void rl_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t res = rl_n(read(addr, bus), f);
+  write(addr, bus, res);
   chk_zero(res, f);
 }
 
 void rla(uint8_t *reg, uint8_t *f) {
-  uint8_t res = rl_n((*reg), f);
+  uint8_t res = rl_n(*reg, f);
   clear_f(f, FLAG_MASK_Z);
 }
 
@@ -1288,19 +1293,19 @@ uint8_t rrc_n(uint8_t n, uint8_t *f) {
 }
 
 void rrc(uint8_t *reg, uint8_t *f) {
-  uint8_t res = rrc_n((*reg), f);
-  (*reg) = res;
+  uint8_t res = rrc_n(*reg, f);
+  *reg = res;
   chk_zero(res, f);
 }
 
-void rrc_indr(uint16_t addr, uint8_t *f, uint8_t **ram) {
-  uint8_t res = rrc_n((*ram)[addr], f);
-  (*ram)[addr] = res;
+void rrc_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t res = rrc_n(read(addr, bus), f);
+  write(addr, bus, res);
   chk_zero(res, f);
 }
 
 void rrca(uint8_t *reg, uint8_t *f) {
-  (*reg) = rrc_n((*reg), f);
+  *reg = rrc_n(*reg, f);
   clear_f(f, FLAG_MASK_Z);
 }
 
@@ -1320,19 +1325,19 @@ uint8_t rr_n(uint8_t n, uint8_t *f) {
 }
 
 void rr(uint8_t *reg, uint8_t *f) {
-  uint8_t res = rr_n((*reg), f);
-  (*reg) = res;
+  uint8_t res = rr_n(*reg, f);
+  *reg = res;
   chk_zero(res, f);
 }
 
-void rr_indr(uint16_t addr, uint8_t *f, uint8_t **ram) {
-  uint8_t res = rr_n((*ram)[addr], f);
-  (*ram)[addr] = res;
+void rr_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t res = rr_n(read(addr, bus), f);
+  write(addr, bus, res);
   chk_zero(res, f);
 }
 
 void rra(uint8_t *reg, uint8_t *f) {
-  (*reg) = rr_n((*reg), f);
+  *reg = rr_n(*reg, f);
   clear_f(f, FLAG_MASK_Z);
 }
 
@@ -1353,10 +1358,11 @@ uint8_t sla_n(uint8_t n, uint8_t *f) {
   return n;
 }
 
-void sla(uint8_t *reg, uint8_t *f) { (*reg) = rlc_n((*reg), f); }
+void sla(uint8_t *reg, uint8_t *f) { *reg = rlc_n(*reg, f); }
 
-void sla_indr(uint16_t addr, uint8_t *f, uint8_t **ram) {
-  (*ram)[addr] = rlc_n((*ram)[addr], f);
+void sla_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t res = rlc_n(read(addr, bus), f);
+  write(addr, bus, res);
 }
 
 uint8_t sra_n(uint8_t n, uint8_t *f) {
@@ -1374,10 +1380,11 @@ uint8_t sra_n(uint8_t n, uint8_t *f) {
   return n;
 }
 
-void sra(uint8_t *reg, uint8_t *f) { (*reg) = sra_n((*reg), f); }
+void sra(uint8_t *reg, uint8_t *f) { *reg = sra_n(*reg, f); }
 
-void sra_indr(uint16_t addr, uint8_t *f, uint8_t **ram) {
-  (*ram)[addr] = sra_n((*ram)[addr], f);
+void sra_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t res = sra_n(read(addr, bus), f);
+  write(addr, bus, res);
 }
 
 // swap nibbles
@@ -1390,10 +1397,11 @@ uint8_t swap_n(uint8_t n, uint8_t *f) {
   chk_zero(n, f);
   return n;
 }
-void swap(uint8_t *reg, uint8_t *f) { (*reg) = swap_n((*reg), f); }
+void swap(uint8_t *reg, uint8_t *f) { *reg = swap_n(*reg, f); }
 
-void swap_indr(uint16_t addr, uint8_t *f, uint8_t **ram) {
-  (*ram)[addr] = swap_n((*ram)[addr], f);
+void swap_indr(uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t res = swap_n(read(addr, bus), f);
+  write(addr, bus, res);
 }
 
 // logical shift
@@ -1411,14 +1419,14 @@ uint8_t srl_n(uint8_t n, uint8_t *f) {
   return n;
 }
 
-void srl(uint8_t *reg, uint8_t *f) { (*reg) = srl_n((*reg), f); }
+void srl(uint8_t *reg, uint8_t *f) { *reg = srl_n(*reg, f); }
 
-void srl_indr(uint16_t addr, uint8_t *f, uint8_t **ram) {}
+void srl_indr(uint16_t addr, uint8_t *f, bus *bus) {}
 
 // bit manipulation
 void bit(uint8_t n, uint8_t *reg, uint8_t *f) {
   uint8_t test = n & (0x1 << n);
-  if (((*reg) & test) >= 1) {
+  if ((*reg & test) >= 1) {
     set_f(f, FLAG_MASK_Z);
   } else {
     clear_f(f, FLAG_MASK_Z);
@@ -1427,9 +1435,9 @@ void bit(uint8_t n, uint8_t *reg, uint8_t *f) {
   set_f(f, FLAG_MASK_H);
 }
 
-void bit_indr(uint8_t n, uint16_t addr, uint8_t *f, uint8_t **ram) {
+void bit_indr(uint8_t n, uint16_t addr, uint8_t *f, bus *bus) {
   uint8_t test = n & (0x1 << n);
-  if (((*ram)[addr] & test) >= 1) {
+  if ((read(addr, bus) & test) >= 1) {
     set_f(f, FLAG_MASK_Z);
   } else {
     clear_f(f, FLAG_MASK_Z);
@@ -1438,16 +1446,18 @@ void bit_indr(uint8_t n, uint16_t addr, uint8_t *f, uint8_t **ram) {
   set_f(f, FLAG_MASK_H);
 }
 
-void res(uint8_t n, uint8_t *reg, uint8_t *f) { (*reg) &= ~(0x1 << n); }
+void res(uint8_t n, uint8_t *reg, uint8_t *f) { *reg &= ~(0x1 << n); }
 
-void res_indr(uint8_t n, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  (*ram)[addr] &= ~(0x1 << n);
+void res_indr(uint8_t n, uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t cur = read(addr, bus);
+  write(addr, bus, cur & ~(0x1 << n));
 }
 
-void set(uint8_t n, uint8_t *reg, uint8_t *f) { (*reg) |= (0x1 << n); }
+void set(uint8_t n, uint8_t *reg, uint8_t *f) { *reg |= (0x1 << n); }
 
-void set_indr(uint8_t n, uint16_t addr, uint8_t *f, uint8_t **ram) {
-  (*ram)[addr] |= (0x1 << n);
+void set_indr(uint8_t n, uint16_t addr, uint8_t *f, bus *bus) {
+  uint8_t cur = read(addr, bus);
+  write(addr, bus, cur |= (0x1 << n));
 }
 
 // jumps
@@ -1478,7 +1488,7 @@ void jr_c(uint8_t *f, uint16_t *pc, uint8_t off) {
 // absolute
 void jp(uint16_t addr, uint16_t *pc) { (*pc) = addr; }
 
-void jp_rr(uint16_t *reg, uint16_t *pc) { (*pc) = (*reg); }
+void jp_rr(uint16_t *reg, uint16_t *pc) { (*pc) = *reg; }
 
 void jp_c(uint8_t *f, uint16_t addr, uint16_t *pc) {
   if (((*f) & FLAG_MASK_C) > 0) {
@@ -1504,67 +1514,65 @@ void jp_nz(uint8_t *f, uint16_t addr, uint16_t *pc) {
 }
 
 // returns
-void ret(registers *regs, uint8_t **ram) {
-  uint8_t lsb = read(regs->SP--, ram);
-  uint8_t msb = read(regs->SP--, ram);
+void ret(registers *regs, bus *bus) {
+  uint8_t lsb = read(regs->SP--, bus);
+  uint8_t msb = read(regs->SP--, bus);
   regs->PC = (msb << 8) | lsb;
 }
-void ret_nz(registers *regs, uint8_t **ram) {
+void ret_nz(registers *regs, bus *bus) {
   if ((regs->F & FLAG_MASK_Z) > 0) {
-    ret(regs, ram);
+    ret(regs, bus);
   }
 }
-void ret_z(registers *regs, uint8_t **ram) {
+void ret_z(registers *regs, bus *bus) {
   if ((regs->F & FLAG_MASK_Z) == 0) {
-    ret(regs, ram);
+    ret(regs, bus);
   }
 }
-void ret_nc(registers *regs, uint8_t **ram) {
+void ret_nc(registers *regs, bus *bus) {
   if ((regs->F & FLAG_MASK_C) > 0) {
-    ret(regs, ram);
+    ret(regs, bus);
   }
 }
-void ret_c(registers *regs, uint8_t **ram) {
+void ret_c(registers *regs, bus *bus) {
   if ((regs->F & FLAG_MASK_C) == 0) {
-    ret(regs, ram);
+    ret(regs, bus);
   }
 }
-void reti(registers *regs, uint8_t **ram, context *ctx) {
-  ret(regs, ram);
+void reti(registers *regs, bus *bus, context *ctx) {
+  ret(regs, bus);
   ctx->IME = true;
 }
 
 // calls
-void call(registers *regs, uint16_t addr, uint8_t **ram) {
+void call(registers *regs, uint16_t addr, bus *bus) {
   (regs->SP--);
-  (*ram)[regs->SP--] = (0xFF00 & regs->PC) >> 8;
-  (*ram)[regs->SP--] = (0x00FF & regs->PC);
+  write(regs->SP--, bus, (0xFF00 & regs->PC) >> 8);
+  write(regs->SP--, bus, (0x00FF & regs->PC));
   regs->PC = addr;
 }
-void call_nz(registers *regs, uint16_t addr, uint8_t **ram) {
+void call_nz(registers *regs, uint16_t addr, bus *bus) {
   if ((regs->F & FLAG_MASK_Z) > 0) {
-    call(regs, addr, ram);
+    call(regs, addr, bus);
   }
 }
-void call_z(registers *regs, uint16_t addr, uint8_t **ram) {
+void call_z(registers *regs, uint16_t addr, bus *bus) {
   if ((regs->F & FLAG_MASK_Z) == 0) {
-    call(regs, addr, ram);
+    call(regs, addr, bus);
   }
 }
-void call_nc(registers *regs, uint16_t addr, uint8_t **ram) {
+void call_nc(registers *regs, uint16_t addr, bus *bus) {
   if ((regs->F & FLAG_MASK_C) > 0) {
-    call(regs, addr, ram);
+    call(regs, addr, bus);
   }
 }
-void call_c(registers *regs, uint16_t addr, uint8_t **ram) {
+void call_c(registers *regs, uint16_t addr, bus *bus) {
   if ((regs->F & FLAG_MASK_C) == 0) {
-    call(regs, addr, ram);
+    call(regs, addr, bus);
   }
 }
 
-void rst(registers *regs, uint8_t **ram, uint16_t rstv) {
-  call(regs, rstv, ram);
-}
+void rst(registers *regs, bus *bus, uint16_t rstv) { call(regs, rstv, bus); }
 
 // misc
 void stop(uint8_t n) {}
@@ -1624,17 +1632,72 @@ void chk_zero(uint16_t val, uint8_t *f) {
   }
 }
 
-uint16_t fetch_imm_nn(uint16_t *pc, uint8_t **ram) {
-  uint8_t lsb = fetch_imm_n(pc, ram);
-  uint8_t msb = fetch_imm_n(pc, ram);
+uint16_t fetch_imm_nn(uint16_t *pc, bus *bus) {
+  uint8_t lsb = fetch_imm_n(pc, bus);
+  uint8_t msb = fetch_imm_n(pc, bus);
   return (msb << 8) | lsb;
 }
 
-uint8_t fetch_imm_n(uint16_t *pc, uint8_t **ram) { return read((*pc)++, ram); }
+uint8_t fetch_imm_n(uint16_t *pc, bus *bus) { return read((*pc)++, bus); }
 
-uint8_t read(uint16_t addr, uint8_t **ram) { return (*ram)[addr]; }
+uint8_t read(uint16_t addr, bus *bus) {
+  if (addr <= BANK_ZERO_END) {
+    return bus->bank_z.mem[addr];
+  } else if (addr <= BANK_N_END) {
+    return bus->bank_n.mem[addr - BANK_N_START];
+  } else if (addr <= VRAM_END) {
+    return bus->vram.mem[addr - VRAM_START];
+  } else if (addr <= EXTERNAL_RAM_END) {
+    return bus->ext_ram.mem[addr - EXTERNAL_RAM_START];
+  } else if (addr <= WRAM_ZERO_END) {
+    return bus->wram_z.mem[addr - WRAM_ZERO_START];
+  } else if (addr <= WRAM_N_END) {
+    return bus->wram_n.mem[addr - WRAM_N_START];
+  } else if (addr <= MIRROR_Z_END) {
+    return bus->wram_z.mem[addr - MIRROR_Z_START];
+  } else if (addr <= MIRROR_N_END) {
+    return bus->wram_n.mem[addr - MIRROR_N_START];
+  } else if (addr <= OAM_END) {
+    return bus->oam.mem[addr - OAM_START];
+  } else if (addr <= UNUSED_END) {
+    return 0x00;
+  } else if (addr <= IO_END) {
+    return bus->hdw.mappings[addr - IO_START];
+  } else if (addr <= HRAM_END) {
+    return bus->hram.mem[addr - HRAM_START];
+  }
+  return 0x00;
+}
 
-void write(uint16_t addr, uint8_t **ram, uint8_t val) { (*ram)[addr] = val; }
+void write(uint16_t addr, bus *bus, uint8_t val) {
+  if (addr <= BANK_ZERO_END) {
+    bus->bank_z.mem[addr] = val;
+  } else if (addr <= BANK_N_END) {
+    bus->bank_n.mem[addr - BANK_N_START] = val;
+  } else if (addr <= VRAM_END) {
+    bus->vram.mem[addr - VRAM_START] = val;
+  } else if (addr <= EXTERNAL_RAM_END) {
+    bus->ext_ram.mem[addr - EXTERNAL_RAM_START] = val;
+  } else if (addr <= WRAM_ZERO_END) {
+    bus->wram_z.mem[addr - WRAM_ZERO_START] = val;
+  } else if (addr <= WRAM_N_END) {
+    bus->wram_n.mem[addr - WRAM_N_START] = val;
+  } else if (addr <= MIRROR_Z_END) {
+    bus->wram_z.mem[addr - MIRROR_Z_START] = val;
+  } else if (addr <= MIRROR_N_END) {
+    bus->wram_n.mem[addr - MIRROR_N_START] = val;
+  } else if (addr <= OAM_END) {
+    bus->oam.mem[addr - OAM_START] = val;
+  } else if (addr <= UNUSED_END) {
+    // noop
+  } else if (addr <= IO_END) {
+    bus->hdw.mappings[addr - IO_START] = val;
+  } else if (addr <= HRAM_END) {
+    bus->hram.mem[addr - HRAM_START] = val;
+  } else if (addr <= IE_END) {
+    bus->hdw.regs.IME = val;
+  }
+}
 
 void set_f(uint8_t *flag, uint8_t mask) { (*flag) |= mask; }
 
